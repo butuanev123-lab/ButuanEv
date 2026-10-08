@@ -1,0 +1,6 @@
+{
+  "name": "ApexFlow Inventory System",
+  "description": "Enterprise inventory system with responsive navigation, shipment receiving, stock tracking, and green & blue visual design.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
