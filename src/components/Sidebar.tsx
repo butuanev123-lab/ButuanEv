@@ -5,8 +5,10 @@ import {
   Truck,
   ArrowDownRight,
   Wrench,
+  Boxes,
   AlertTriangle,
   RotateCcw,
+  BatteryCharging,
   BarChart3,
   ChevronLeft,
   ChevronRight,
@@ -77,6 +79,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       tooltip: 'Bill of Materials & work orders',
     },
     {
+      id: 'units' as NavigationTab,
+      label: 'Units',
+      icon: Boxes,
+      badge: null,
+      tooltip: 'Completed units by vehicle category',
+    },
+    {
       id: 'damaged' as NavigationTab,
       label: 'Damaged',
       icon: AlertTriangle,
@@ -145,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               title={collapsed ? item.label : item.tooltip}
               className={`w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left ${
                 isActive
-                  ? 'bg-gradient-to-r from-teal-50/80 to-blue-50/40 text-teal-900 shadow-sm border border-teal-200/60 font-semibold'
+                  ? 'bg-linear-to-r from-teal-50/80 to-blue-50/40 text-teal-900 shadow-sm border border-teal-200/60 font-semibold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/80'
               }`}
             >

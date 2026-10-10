@@ -58,8 +58,8 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
     );
   });
 
-  const pendingShipmentsCount = shipments.filter((s) => s.status === 'Pending').length;
-  const receivedShipmentsCount = shipments.filter((s) => s.status === 'Received').length;
+  const pendingShipmentsCount = shipments.filter((s) => s.status === 'Pending' || s.status === 'Received Partial').length;
+  const receivedShipmentsCount = shipments.filter((s) => ['Received', 'Received Complete', 'Closed with Shortage'].includes(s.status)).length;
   const pendingRequisitionsCount = requisitions.filter((r) => r.status === 'Pending Approval').length;
 
   return (
@@ -170,9 +170,9 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             </div>
 
             <div
-              onClick={() => setFilterStatus('Received')}
+              onClick={() => setFilterStatus('Received Complete')}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                filterStatus === 'Received'
+                filterStatus === 'Received Complete'
                   ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
                   : 'bg-white text-slate-800 border-slate-200/80 hover:border-teal-300'
               }`}
@@ -202,7 +202,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <div className="flex items-center gap-2 text-xs">
               <span className="text-slate-500 font-medium">Filter:</span>
               <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg">
-                {['All', 'Pending', 'Received'].map((st) => (
+                {['All', 'Pending', 'Received Partial', 'Received Complete', 'Closed with Shortage'].map((st) => (
                   <button
                     key={st}
                     onClick={() => setFilterStatus(st)}
@@ -287,6 +287,8 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                               className={`inline-flex items-center gap-1.5 text-xs font-medium ${
                                 s.status === 'Pending'
                                   ? 'text-blue-700'
+                                  : s.status === 'Received Partial' || s.status === 'Closed with Shortage'
+                                    ? 'text-amber-700'
                                   : 'text-emerald-700'
                               }`}
                             >
@@ -294,6 +296,8 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                                 className={`w-1.5 h-1.5 rounded-full  ${
                                   s.status === 'Pending'
                                     ? 'bg-blue-500'
+                                    : s.status === 'Received Partial' || s.status === 'Closed with Shortage'
+                                      ? 'bg-amber-500'
                                     : 'bg-emerald-500'
                                 }`}
                               />
@@ -308,7 +312,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                               >
                                 View
                               </button>
-                              {s.status === 'Pending' ? (
+                              {s.status === 'Pending' || s.status === 'Received Partial' ? (
                                 <>
                                   <span className="text-slate-300">·</span>
                                   <button
@@ -328,7 +332,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                               ) : (
                                 <>
                                   <span className="text-slate-300">·</span>
-                                  <span className="text-slate-400 italic">Received</span>
+                                  <span className="text-slate-400 italic">View-only</span>
                                 </>
                               )}
                             </div>

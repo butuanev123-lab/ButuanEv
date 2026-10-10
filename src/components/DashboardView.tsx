@@ -51,7 +51,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const stockNeedingAttention = parts.filter(
     (p) => p.status === 'Out of stock' || p.status === 'Low stock'
   );
-  const pendingShipments = shipments.filter((s) => s.status === 'Pending');
+  const pendingShipments = shipments.filter((s) => s.status === 'Pending' || s.status === 'Received Partial');
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">

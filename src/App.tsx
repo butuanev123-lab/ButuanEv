@@ -7,6 +7,9 @@ import {
   DamagedRecord,
   ReturnRecord,
   StockOutRecord,
+  BatteryRecord,
+  ShipmentReceiptLine,
+  ShipmentStatus,
 } from './types/inventory';
 import {
   INITIAL_PARTS,
@@ -15,6 +18,7 @@ import {
   INITIAL_DAMAGED,
   INITIAL_RETURNS,
   INITIAL_STOCK_OUT,
+  INITIAL_BATTERIES,
 } from './data/initialData';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -23,6 +27,7 @@ import { InventoryView } from './components/InventoryView';
 import { ShipmentsView } from './components/ShipmentsView';
 import { StockOutView } from './components/StockOutView';
 import { AssemblyView } from './components/AssemblyView';
+import { UnitsView } from './components/UnitsView';
 import { DamagedView } from './components/DamagedView';
 import { ReturnsView } from './components/ReturnsView';
 import { ReportsView } from './components/ReportsView';
@@ -46,9 +51,11 @@ export default function App() {
   const [parts, setParts] = useState<Part[]>(INITIAL_PARTS);
   const [shipments, setShipments] = useState<Shipment[]>(INITIAL_SHIPMENTS);
   const [assemblies, setAssemblies] = useState<Assembly[]>(INITIAL_ASSEMBLIES);
+  const [unitCategories, setUnitCategories] = useState<string[]>(['E-bike', 'E-bus', 'E-cargo']);
   const [damagedList, setDamagedList] = useState<DamagedRecord[]>(INITIAL_DAMAGED);
   const [returnsList, setReturnsList] = useState<ReturnRecord[]>(INITIAL_RETURNS);
   const [stockOutList, setStockOutList] = useState<StockOutRecord[]>(INITIAL_STOCK_OUT);
+  const [batteries, setBatteries] = useState<BatteryRecord[]>(INITIAL_BATTERIES);
 
   // Navigation state
   const [currentTab, setCurrentTab] = useState<NavigationTab>('dashboard');
@@ -195,19 +202,35 @@ export default function App() {
     addToast('success', `Shipment ${updated.shipmentNumber} Updated`);
   };
 
-  // Confirm Receipt handler (Core wireframe functionality)
-  const handleConfirmReceipt = (shipmentId: string) => {
+  const handleConfirmReceipt = (
+    shipmentId: string,
+    confirmation: {
+      status: ShipmentStatus;
+      lines: Array<Omit<ShipmentReceiptLine, 'confirmedAt' | 'confirmedBy'>>;
+    }
+  ) => {
     const targetShipment = shipments.find((s) => s.id === shipmentId);
-    if (!targetShipment || targetShipment.status === 'Received') return;
+    if (!targetShipment || !['Pending', 'Received Partial'].includes(targetShipment.status)) return;
 
-    // 1. Update parts stock
+    const confirmedAt = new Date().toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }) + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Replace with the authenticated user's display name when auth is connected.
+    const confirmedBy = 'Inventory Officer';
+
+    const addedGoodStockByCode = confirmation.lines.reduce<Record<string, number>>((totals, line, index) => {
+      const partCode = targetShipment.items[index]?.partCode;
+      if (partCode) totals[partCode] = (totals[partCode] || 0) + Math.max(0, line.actualReceived - line.damaged);
+      return totals;
+    }, {});
+
     setParts((prevParts) =>
       prevParts.map((part) => {
-        const itemInShipment = targetShipment.items.find(
-          (item) => item.partCode === part.code
-        );
-        if (itemInShipment) {
-          const updatedQty = part.availableQty + itemInShipment.quantity;
+        const stockIn = addedGoodStockByCode[part.code] || 0;
+        if (stockIn) {
+          const updatedQty = part.availableQty + stockIn;
           return {
             ...part,
             availableQty: updatedQty,
@@ -223,25 +246,36 @@ export default function App() {
       })
     );
 
-    // 2. Mark shipment as Received
-    const timestamp = new Date().toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }) + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
     setShipments((prev) =>
       prev.map((s) =>
-        s.id === shipmentId
-          ? { ...s, status: 'Received', receivedAt: timestamp }
-          : s
+        s.id !== shipmentId ? s : {
+          ...s,
+          status: confirmation.status,
+          receivedAt: confirmedAt,
+          confirmedBy,
+          items: s.items.map((item, index) => {
+            const line = confirmation.lines[index];
+            const priorActual = item.actualReceived || 0;
+            const priorDamaged = item.damaged || 0;
+            const actualReceived = priorActual + line.actualReceived;
+            const damaged = priorDamaged + line.damaged;
+            return {
+              ...item,
+              actualReceived,
+              damaged,
+              difference: actualReceived - item.quantity,
+              note: line.note,
+              receiptHistory: [...(item.receiptHistory || []), { ...line, confirmedAt, confirmedBy }],
+            };
+          }),
+        }
       )
     );
 
     addToast(
       'success',
       `Receipt Confirmed for ${targetShipment.shipmentNumber}`,
-      `Quantities added to Parts Inventory. Shipment is now marked received.`
+      `Good quantities added to Parts Inventory. Shipment is now ${confirmation.status}.`
     );
   };
 
@@ -274,6 +308,19 @@ export default function App() {
     );
 
     addToast('success', `Built 1 Unit: ${assembly.name}`, 'Raw components deducted from inventory.');
+  };
+
+  const handleAddUnitCategory = (category: string) => {
+    const normalizedCategory = category.trim();
+    if (!normalizedCategory) return;
+
+    if (unitCategories.some((existing) => existing.toLowerCase() === normalizedCategory.toLowerCase())) {
+      addToast('warning', 'Category Already Exists', `${normalizedCategory} is already available in Units.`);
+      return;
+    }
+
+    setUnitCategories((previous) => [...previous, normalizedCategory]);
+    addToast('success', 'Unit Category Added', `${normalizedCategory} is ready for future assembled units.`);
   };
 
   // Damaged Log handler
@@ -347,11 +394,46 @@ export default function App() {
     addToast('success', `Restocked Return: ${item.code}`, `+${item.quantity} units returned to inventory.`);
   };
 
+  const handleAddBattery = (battery: Omit<BatteryRecord, 'id' | 'lastChargedAt'>) => {
+    const newBattery: BatteryRecord = {
+      ...battery,
+      id: `bat-${Date.now()}`,
+      lastChargedAt: `${battery.chargeDate} 00:00`,
+    };
+    setBatteries((previous) => [newBattery, ...previous]);
+    addToast('success', `Battery ${newBattery.code} Added`, `${newBattery.brand} battery is now being tracked.`);
+  };
+
+  const handleRecordBatteryCharge = (id: string, chargeLevel: number) => {
+    const battery = batteries.find((item) => item.id === id);
+    if (!battery) return;
+
+    const chargeDate = new Date().toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timestamp = new Date().toLocaleString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    setBatteries((previous) =>
+      previous.map((battery) => {
+        if (battery.id !== id) return battery;
+        return { ...battery, chargeLevel, chargeDate, lastChargedAt: timestamp };
+      })
+    );
+    addToast('success', `Charge Updated: ${battery.code}`, `Battery level is now ${chargeLevel}%.`);
+  };
+
   const lowStockCount = parts.filter(
     (p) => p.status === 'Low stock' || p.status === 'Out of stock'
   ).length;
   const pendingShipmentsCount = shipments.filter(
-    (s) => s.status === 'Pending'
+    (s) => s.status === 'Pending' || s.status === 'Received Partial'
   ).length;
 
   return (
@@ -442,6 +524,14 @@ export default function App() {
             />
           )}
 
+          {currentTab === 'units' && (
+            <UnitsView
+              assemblies={assemblies}
+              categories={unitCategories}
+              onAddCategory={handleAddUnitCategory}
+            />
+          )}
+
           {currentTab === 'damaged' && (
             <DamagedView
               damagedList={damagedList}
@@ -457,6 +547,14 @@ export default function App() {
               parts={parts}
               onAddReturn={handleAddReturn}
               onRestockReturn={handleRestockReturn}
+            />
+          )}
+
+          {currentTab === 'batteries' && (
+            <BatteriesView
+              batteries={batteries}
+              onAddBattery={handleAddBattery}
+              onRecordCharge={handleRecordBatteryCharge}
             />
           )}
 

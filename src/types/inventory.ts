@@ -18,10 +18,35 @@ export interface Part {
 export interface ShipmentItem {
   partCode: string;
   partName: string;
+  /** Original quantity expected on this shipment line. */
   quantity: number;
+  /** Cumulative quantity physically received across all receipt confirmations. */
+  actualReceived?: number;
+  /** Cumulative quantity received damaged across all receipt confirmations. */
+  damaged?: number;
+  /** Cumulative received quantity minus the original expected quantity. */
+  difference?: number;
+  note?: string;
+  receiptHistory?: ShipmentReceiptLine[];
 }
 
-export type ShipmentStatus = 'Pending' | 'Received';
+export interface ShipmentReceiptLine {
+  expected: number;
+  actualReceived: number;
+  damaged: number;
+  difference: number;
+  note?: string;
+  confirmedAt: string;
+  confirmedBy: string;
+}
+
+export type ShipmentStatus =
+  | 'Pending'
+  | 'Received Complete'
+  | 'Received Partial'
+  | 'Closed with Shortage'
+  /** Legacy value retained for older imported records. */
+  | 'Received';
 
 export interface Shipment {
   id: string;
@@ -33,6 +58,7 @@ export interface Shipment {
   trackingNumber?: string;
   notes?: string;
   receivedAt?: string;
+  confirmedBy?: string;
 }
 
 export interface AssemblyBOMItem {
@@ -45,6 +71,7 @@ export interface Assembly {
   id: string;
   code: string;
   name: string;
+  category: string;
   bom: AssemblyBOMItem[];
   completedCount: number;
   status: 'Ready to Build' | 'Parts Shortage';
@@ -88,12 +115,23 @@ export interface StockOutRecord {
   operator?: string;
 }
 
+export interface BatteryRecord {
+  id: string;
+  code: string;
+  brand: string;
+  chargeLevel: number;
+  chargeDate: string;
+  lastChargedAt: string;
+}
+
 export type NavigationTab =
   | 'dashboard'
   | 'inventory'
   | 'shipments'
   | 'stock-out'
   | 'assembly'
+  | 'units'
   | 'damaged'
   | 'returns'
+  | 'batteries'
   | 'reports';

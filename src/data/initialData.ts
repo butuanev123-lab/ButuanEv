@@ -1,4 +1,4 @@
-import { Part, Shipment, Assembly, DamagedRecord, ReturnRecord, StockOutRecord } from '../types/inventory';
+import { Part, Shipment, Assembly, DamagedRecord, ReturnRecord, StockOutRecord, BatteryRecord } from '../types/inventory';
 
 export const INITIAL_PARTS: Part[] = [
   {
@@ -147,7 +147,7 @@ export const INITIAL_SHIPMENTS: Shipment[] = [
     shipmentNumber: 'SHP-0315',
     supplier: 'Apex Precision Metals',
     dateReceived: '01 Oct 2026',
-    status: 'Received',
+    status: 'Received Complete',
     trackingNumber: 'APX-771239-STD',
     notes: 'Bulk crate verified by J. Miller.',
     receivedAt: '01 Oct 2026 14:22',
@@ -163,6 +163,7 @@ export const INITIAL_ASSEMBLIES: Assembly[] = [
     id: 'asm-1',
     code: 'ASM-101',
     name: 'Precision Linear Rail Drive Pack',
+    category: 'E-bike',
     status: 'Parts Shortage',
     completedCount: 14,
     targetQty: 25,
@@ -177,6 +178,7 @@ export const INITIAL_ASSEMBLIES: Assembly[] = [
     id: 'asm-2',
     code: 'ASM-102',
     name: 'Heavy Flange Seal Kit',
+    category: 'E-cargo',
     status: 'Ready to Build',
     completedCount: 30,
     targetQty: 40,
@@ -299,6 +301,33 @@ export const INITIAL_STOCK_OUT: StockOutRecord[] = [
     timestamp: '04 Oct 2026 09:10',
     issuedTo: 'Chassis Fab Bay 1',
     operator: 'K. Larson',
+  },
+];
+
+export const INITIAL_BATTERIES: BatteryRecord[] = [
+  {
+    id: 'bat-1',
+    code: 'BAT-001',
+    brand: 'EVE Energy',
+    chargeLevel: 92,
+    chargeDate: '08 Oct 2026',
+    lastChargedAt: '08 Oct 2026 15:45',
+  },
+  {
+    id: 'bat-2',
+    code: 'BAT-002',
+    brand: 'CATL',
+    chargeLevel: 68,
+    chargeDate: '07 Oct 2026',
+    lastChargedAt: '07 Oct 2026 11:20',
+  },
+  {
+    id: 'bat-3',
+    code: 'BAT-003',
+    brand: 'Panasonic',
+    chargeLevel: 24,
+    chargeDate: '05 Oct 2026',
+    lastChargedAt: '05 Oct 2026 09:10',
   },
 ];
 

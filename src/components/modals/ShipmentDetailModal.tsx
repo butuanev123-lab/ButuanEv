@@ -63,7 +63,9 @@ export const ShipmentDetailModal: React.FC<ShipmentDetailModalProps> = ({
                   className={`text-[11px] font-medium px-2 py-0.5 rounded ${
                     shipment.status === 'Pending'
                       ? 'bg-blue-50 text-blue-700'
-                      : 'bg-emerald-50 text-emerald-700'
+                      : shipment.status === 'Received Partial' || shipment.status === 'Closed with Shortage'
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'bg-emerald-50 text-emerald-700'
                   }`}
                 >
                   {shipment.status}
@@ -73,7 +75,7 @@ export const ShipmentDetailModal: React.FC<ShipmentDetailModalProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            {!isEditing && shipment.status === 'Pending' && onSaveShipment && (
+            {!isEditing && ['Pending', 'Received Partial'].includes(shipment.status) && onSaveShipment && (
               <button
                 onClick={() => setIsEditing(true)}
                 className="p-1.5 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100"
@@ -173,6 +175,12 @@ export const ShipmentDetailModal: React.FC<ShipmentDetailModalProps> = ({
                   {shipment.notes}
                 </div>
               )}
+              {shipment.receivedAt && (
+                <div className="flex items-center gap-2 text-slate-600">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <span>Confirmed: <strong className="text-slate-800">{shipment.receivedAt}</strong>{shipment.confirmedBy && <> by <strong className="text-slate-800">{shipment.confirmedBy}</strong></>}</span>
+                </div>
+              )}
             </div>
 
             {/* Items contained */}
@@ -185,8 +193,12 @@ export const ShipmentDetailModal: React.FC<ShipmentDetailModalProps> = ({
                       <div className="font-medium text-slate-800">{item.partName}</div>
                       <div className="text-[10px] text-slate-400 font-mono">{item.partCode}</div>
                     </div>
-                    <div className="font-mono font-bold text-slate-900 tabular-nums">
-                      +{item.quantity} units
+                    <div className="text-right space-y-0.5">
+                      <div className="font-mono font-bold text-slate-900 tabular-nums">Expected {item.quantity}</div>
+                      {item.actualReceived !== undefined && <div className="font-mono text-[11px] text-emerald-700 tabular-nums">Received {item.actualReceived} · Good {item.actualReceived - (item.damaged || 0)}</div>}
+                      {(item.damaged || 0) > 0 && <div className="font-mono text-[11px] text-amber-700 tabular-nums">Damaged {item.damaged}</div>}
+                      {(item.difference || 0) !== 0 && <div className="font-mono text-[11px] text-amber-700 tabular-nums">Difference {item.difference! > 0 ? '+' : ''}{item.difference}</div>}
+                      {item.note && <div className="text-[10px] text-slate-500">{item.note}</div>}
                     </div>
                   </div>
                 ))}
@@ -194,7 +206,7 @@ export const ShipmentDetailModal: React.FC<ShipmentDetailModalProps> = ({
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              {shipment.status === 'Pending' && onReceiveShipment ? (
+              {['Pending', 'Received Partial'].includes(shipment.status) && onReceiveShipment ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -207,7 +219,7 @@ export const ShipmentDetailModal: React.FC<ShipmentDetailModalProps> = ({
                   Receive Shipment Now
                 </button>
               ) : (
-                <span className="text-xs text-slate-400 italic">Received shipments are view-only.</span>
+                <span className="text-xs text-slate-400 italic">Received Complete and Closed shipments are view-only.</span>
               )}
               <button
                 type="button"

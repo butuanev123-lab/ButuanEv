@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   const lowStockParts = parts.filter((p) => p.status === 'Low stock' || p.status === 'Out of stock');
-  const pendingShipments = shipments.filter((s) => s.status === 'Pending');
+  const pendingShipments = shipments.filter((s) => s.status === 'Pending' || s.status === 'Received Partial');
 
   const filteredParts = searchQuery.trim()
     ? parts.filter(
@@ -69,8 +69,10 @@ export const Header: React.FC<HeaderProps> = ({
     shipments: 'Inbound Shipments',
     'stock-out': 'Stock Out Records',
     assembly: 'Assembly & BOM',
+    units: 'Assembled Units',
     damaged: 'Damaged Goods',
     returns: 'Returns & RMA',
+    batteries: 'Battery Management',
     reports: 'Valuation & Reports',
   }[currentTab];
 

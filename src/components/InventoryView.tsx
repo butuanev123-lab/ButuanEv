@@ -343,7 +343,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                         >
                           Stock In
                         </button>
-                        <span className="text-slate-300">·</span>
+
                         {/* <button
                           onClick={() => onStockOutPart(part)}
                           className="text-slate-600 hover:text-slate-900 hover:underline cursor-pointer"
@@ -358,7 +358,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                           Edit
                         </button>
                         <span className="text-slate-300">·</span>
-                        <button className="text-red-500 hover:text-shadow-amber-600 hover:underline cursor-pointer">Delete</button>
+                        <button className="text-red-500 hover:text-shadow-amber-600 hover:underline cursor-pointer">
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
