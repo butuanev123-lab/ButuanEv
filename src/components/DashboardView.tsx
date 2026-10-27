@@ -165,7 +165,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-             Shipment receiving 
+             Shipment receive
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {pendingShipments.length} shipment{pendingShipments.length === 1 ? '' : 's'} awaiting receipt
