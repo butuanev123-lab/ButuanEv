@@ -14,8 +14,8 @@ import {
 } from "../../types/inventory";
 
 interface ReceiptDraft {
-  actualReceived: number;
-  damaged: number;
+  actualReceived: number | "";
+  damaged: number | "";
   note: string;
 }
 interface ReceiveShipmentModalProps {
@@ -32,8 +32,12 @@ interface ReceiveShipmentModalProps {
   ) => void;
 }
 
-const numberValue = (value: string) =>
-  Math.max(0, Number.parseInt(value, 10) || 0);
+// Returns "" for an empty field so the user can clear the input while typing
+const numberValue = (value: string): number | "" =>
+  value === "" ? "" : Math.max(0, Number.parseInt(value, 10) || 0);
+
+// Use this whenever a real number is needed (math, preview, submit)
+const toNum = (value: number | ""): number => (value === "" ? 0 : value);
 
 export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
   shipment,
@@ -74,17 +78,20 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
     const item = shipment?.items[index];
     return item ? Math.max(0, item.quantity - (item.actualReceived || 0)) : 0;
   };
+
   const lineStates = useMemo(
     () =>
       (shipment?.items || []).map((_, index) => {
-        const line = lines[index] || {
+        const line: ReceiptDraft = lines[index] || {
           actualReceived: expectedForLine(index),
           damaged: 0,
           note: "",
         };
         const expected = expectedForLine(index);
-        const difference = line.actualReceived - expected;
-        const flagged = difference !== 0 || line.damaged > 0;
+        const received = toNum(line.actualReceived);
+        const damaged = toNum(line.damaged);
+        const difference = received - expected;
+        const flagged = difference !== 0 || damaged > 0;
         return {
           expected,
           difference,
@@ -97,8 +104,7 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
   const hasDiscrepancy = lineStates.some((line) => line.flagged);
   const matchedLines = lineStates.filter((line) => !line.flagged).length;
   const canConfirm =
-    lines.length > 0 &&
-    (!hasShortage || Boolean(shortageDecision));
+    lines.length > 0 && (!hasShortage || Boolean(shortageDecision));
 
   const stockPreviews = useMemo(() => {
     const result = new Map<
@@ -113,20 +119,21 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
         after: partQty,
         lineCount: 0,
       };
-      const draft = lines[index] || {
+      const draft: ReceiptDraft = lines[index] || {
         actualReceived: Math.max(0, item.quantity - (item.actualReceived || 0)),
         damaged: 0,
         note: "",
       };
       preview.after += Math.max(
         0,
-        (draft?.actualReceived || 0) - (draft?.damaged || 0),
+        toNum(draft.actualReceived) - toNum(draft.damaged),
       );
       preview.lineCount += 1;
       result.set(item.partCode, preview);
     });
     return result;
   }, [lines, parts, shipment]);
+
   const groupedLineIndexes = useMemo(() => {
     const groups = new Map<string, number[]>();
     shipment?.items.forEach((item, index) =>
@@ -136,18 +143,27 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
   }, [shipment]);
 
   if (!isOpen || !shipment) return null;
+
   const updateLine = (index: number, updates: Partial<ReceiptDraft>) =>
     setLines((current) =>
       current.map((line, lineIndex) => {
         if (lineIndex !== index) return line;
         const next = { ...line, ...updates };
-        if (updates.actualReceived !== undefined)
-          next.damaged = Math.min(next.damaged, updates.actualReceived);
-        if (updates.damaged !== undefined)
-          next.damaged = Math.min(updates.damaged, next.actualReceived);
+        // Keep damaged <= actualReceived, but don't force "" back to 0 while typing
+        if (updates.actualReceived !== undefined && next.damaged !== "")
+          next.damaged = Math.min(
+            toNum(next.damaged),
+            toNum(updates.actualReceived),
+          );
+        if (updates.damaged !== undefined && updates.damaged !== "")
+          next.damaged = Math.min(
+            updates.damaged,
+            toNum(next.actualReceived),
+          );
         return next;
       }),
     );
+
   const handleConfirm = () => {
     if (!canConfirm) return;
     onConfirmReceipt(shipment.id, {
@@ -156,8 +172,8 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
         : "Received Complete",
       lines: lines.map((line, index) => ({
         expected: lineStates[index].expected,
-        actualReceived: line.actualReceived,
-        damaged: line.damaged,
+        actualReceived: toNum(line.actualReceived),
+        damaged: toNum(line.damaged),
         difference: lineStates[index].difference,
         note: line.note.trim() || undefined,
       })),
@@ -248,7 +264,7 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
                 >
                   {indexes.map((index, position) => {
                     const item = shipment.items[index];
-                    const draft = lines[index] || {
+                    const draft: ReceiptDraft = lines[index] || {
                       actualReceived: expectedForLine(index),
                       damaged: 0,
                       note: "",
@@ -281,12 +297,14 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
                             type="number"
                             min="0"
                             inputMode="numeric"
-                            value={draft?.actualReceived ?? 0}
+                            value={draft.actualReceived}
+                            onFocus={(event) => event.target.select()}
                             onChange={(event) =>
                               updateLine(index, {
                                 actualReceived: numberValue(event.target.value),
                               })
                             }
+                            
                             className="w-24 px-2 py-1.5 font-mono tabular-nums border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                           />
                         </td>
@@ -301,14 +319,16 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
                             id={`${inputId}-damaged`}
                             type="number"
                             min="0"
-                            max={draft?.actualReceived ?? 0}
+                            max={toNum(draft.actualReceived)}
                             inputMode="numeric"
-                            value={draft?.damaged ?? 0}
+                            value={draft.damaged}
+                            onFocus={(event) => event.target.select()}
                             onChange={(event) =>
                               updateLine(index, {
                                 damaged: numberValue(event.target.value),
                               })
                             }
+                            
                             className="w-20 px-2 py-1.5 font-mono tabular-nums border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                           />
                         </td>
@@ -357,7 +377,7 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
                                 id={`${inputId}-note`}
                                 type="text"
                                 maxLength={120}
-                                value={draft?.note ?? ""}
+                                value={draft.note ?? ""}
                                 onChange={(event) =>
                                   updateLine(index, {
                                     note: event.target.value,

@@ -15,6 +15,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { Part, PartStatus } from "../types/inventory";
+import Swal from "sweetalert2";
 
 interface InventoryViewProps {
   parts: Part[];
@@ -22,6 +23,7 @@ interface InventoryViewProps {
   onOpenRequisitionModal: (part?: Part) => void;
   onViewPart: (part: Part) => void;
   onEditPart: (part: Part) => void;
+  onDeletePart?: (part: Part) => void;
   onStockInPart: (part: Part) => void;
   onStockOutPart: (part: Part) => void;
 }
@@ -358,7 +360,19 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                           Edit
                         </button>
                         <span className="text-slate-300">·</span>
-                        <button className="text-red-500 hover:text-shadow-amber-600 hover:underline cursor-pointer">
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this part?')) {
+                              onDeletePart?.(part);
+                              Swal.fire({
+                                title: "Deleted!",
+                                text: "The part has been removed from inventory.",
+                                icon: "success",
+                              });
+                            }
+                          }}
+                          className="text-red-500 hover:text-shadow-amber-600 hover:underline cursor-pointer"
+                        >
                           Delete
                         </button>
                       </div>

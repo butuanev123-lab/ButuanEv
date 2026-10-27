@@ -18,7 +18,10 @@ export const AddPartModal: React.FC<AddPartModalProps> = ({
   const [code, setCode] = useState(`PRT-00${existingCodes.length + 1}`);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Fasteners');
-  const [availableQty, setAvailableQty] = useState(0);
+  const numberValue = (value: string): number | '' =>
+  value === '' ? '' : Math.max(0, Number(value) || 0);
+
+const [availableQty, setAvailableQty] = useState(0);
   const [minStockThreshold, setMinStockThreshold] = useState(50);
   const [location, setLocation] = useState('A-01');
   const [unitPrice, setUnitPrice] = useState(1.0);
@@ -118,7 +121,7 @@ export const AddPartModal: React.FC<AddPartModalProps> = ({
                 type="number"
                 min="0"
                 value={availableQty}
-                onChange={(e) => setAvailableQty(Number(e.target.value))}
+                onChange={(e) => setAvailableQty(numberValue(e.target.value) as number)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-mono"
               />
             </div>
@@ -128,7 +131,7 @@ export const AddPartModal: React.FC<AddPartModalProps> = ({
                 type="number"
                 min="1"
                 value={minStockThreshold}
-                onChange={(e) => setMinStockThreshold(Number(e.target.value))}
+                onChange={(e) => setMinStockThreshold(numberValue(e.target.value) as number)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-mono"
               />
             </div>
@@ -153,7 +156,7 @@ export const AddPartModal: React.FC<AddPartModalProps> = ({
                 step="0.01"
                 min="0"
                 value={unitPrice}
-                onChange={(e) => setUnitPrice(Number(e.target.value))}
+                onChange={(e) => setUnitPrice(numberValue(e.target.value) as number)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-mono"
               />
             </div>

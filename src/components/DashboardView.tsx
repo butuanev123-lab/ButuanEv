@@ -148,7 +148,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="group cursor-pointer p-4 rounded-xl bg-white border border-slate-200/80 hover:border-blue-300 transition-all shadow-xs hover:shadow-sm"
         >
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Pending shipments
+            Shipments
           </div>
           <div className="text-3xl sm:text-4xl font-bold text-slate-900 font-mono tabular-nums mt-1 group-hover:text-blue-600 transition-colors">
             {pendingShipments.length}
@@ -165,7 +165,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-              Pending receiving
+             Shipment receiving 
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {pendingShipments.length} shipment{pendingShipments.length === 1 ? '' : 's'} awaiting receipt

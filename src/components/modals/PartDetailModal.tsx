@@ -25,6 +25,9 @@ export const PartDetailModal: React.FC<PartDetailModalProps> = ({
     setIsEditing(initialEditMode);
   }, [part, initialEditMode]);
 
+  const numberValue = (value: string): number | '' =>
+    value === '' ? '' : Math.max(0, Number(value) || 0);
+
   if (!isOpen || !part || !formData) return null;
 
   const handleSave = (e: React.FormEvent) => {
@@ -126,7 +129,7 @@ export const PartDetailModal: React.FC<PartDetailModalProps> = ({
                   type="number"
                   min="0"
                   value={formData.availableQty}
-                  onChange={(e) => setFormData({ ...formData, availableQty: Number(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, availableQty: numberValue(e.target.value) as number })}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 font-mono"
                 />
               </div>
@@ -136,7 +139,7 @@ export const PartDetailModal: React.FC<PartDetailModalProps> = ({
                   type="number"
                   min="1"
                   value={formData.minStockThreshold}
-                  onChange={(e) => setFormData({ ...formData, minStockThreshold: Number(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, minStockThreshold: numberValue(e.target.value) as number })}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 font-mono"
                 />
               </div>
@@ -147,7 +150,7 @@ export const PartDetailModal: React.FC<PartDetailModalProps> = ({
                   step="0.01"
                   min="0"
                   value={formData.unitPrice}
-                  onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, unitPrice: numberValue(e.target.value) as number })}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 font-mono"
                 />
               </div>

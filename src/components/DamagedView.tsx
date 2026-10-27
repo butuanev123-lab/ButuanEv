@@ -24,7 +24,10 @@ export const DamagedView: React.FC<DamagedViewProps> = ({
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedPartCode, setSelectedPartCode] = useState(parts[0]?.code || '');
-  const [quantity, setQuantity] = useState(1);
+  const numberValue = (value: string): number | '' =>
+  value === '' ? '' : Math.max(1, Number(value) || 1);
+
+const [quantity, setQuantity] = useState(1);
   const [reason, setReason] = useState('');
   const [reportedBy, setReportedBy] = useState('J. Miller');
 
@@ -109,7 +112,7 @@ export const DamagedView: React.FC<DamagedViewProps> = ({
                   type="number"
                   min="1"
                   value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  onChange={(e) => setQuantity(numberValue(e.target.value) as number)}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                   required
                 />
