@@ -30,7 +30,7 @@ export const LogoPlaceholder: React.FC<LogoPlaceholderProps> = ({ collapsed = fa
         {/* Logo Mark Container */}
         <div
           onClick={() => setIsEditing(true)}
-          className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-blue-600 p-[1.5px] shadow-sm hover:shadow cursor-pointer transition-transform duration-150 active:scale-95 group-hover:scale-105"
+          className="relative flex items-center justify-center w-10 h-10 rounded-xl  cursor-pointer transition-transform duration-150 active:scale-95 group-hover:scale-105"
         >
           <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center overflow-hidden">
             {customLogoUrl ? (
@@ -41,7 +41,7 @@ export const LogoPlaceholder: React.FC<LogoPlaceholderProps> = ({ collapsed = fa
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <ButuanEvLogo size={36} />
+              <ButuanEvLogo size={50} />
             )}
           </div>
           {/* Subtle edit hint on hover */}

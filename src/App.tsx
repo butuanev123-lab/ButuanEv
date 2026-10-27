@@ -53,6 +53,9 @@ export default function App() {
   const [assemblies, setAssemblies] = useState<Assembly[]>(INITIAL_ASSEMBLIES);
   const [unitCategories, setUnitCategories] = useState<string[]>(['E-bike', 'E-bus', 'E-cargo']);
   const [damagedList, setDamagedList] = useState<DamagedRecord[]>(INITIAL_DAMAGED);
+  const onDeletePart = (part: Part) => {
+    setParts(prev => prev.filter(p => p.id !== part.id));
+  };
   const [returnsList, setReturnsList] = useState<ReturnRecord[]>(INITIAL_RETURNS);
   const [stockOutList, setStockOutList] = useState<StockOutRecord[]>(INITIAL_STOCK_OUT);
   const [batteries, setBatteries] = useState<BatteryRecord[]>(INITIAL_BATTERIES);
@@ -493,6 +496,7 @@ export default function App() {
               onEditPart={(p) => setViewingPart({ part: p, editMode: true })}
               onStockInPart={(p) => setAdjustingStock({ part: p, mode: 'in' })}
               onStockOutPart={(p) => setAdjustingStock({ part: p, mode: 'out' })}
+              onDeletePart={onDeletePart}
             />
           )}
 
