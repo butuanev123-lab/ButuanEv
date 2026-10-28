@@ -70,7 +70,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ parts, shipments }) =>
             Total Inventory Book Value
           </div>
           <div className="text-3xl font-bold text-teal-800 font-mono tabular-nums mt-1">
-            ${totalValuation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ₱{totalValuation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-slate-400 mt-2">
             Weighted across {totalStockUnits.toLocaleString()} units on hand
@@ -82,7 +82,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ parts, shipments }) =>
             Replenishment Capital Needed
           </div>
           <div className="text-3xl font-bold text-amber-700 font-mono tabular-nums mt-1">
-            ${lowStockItems
+            ₱{lowStockItems
               .reduce((acc, p) => acc + (p.minStockThreshold * 2 - p.availableQty) * p.unitPrice, 0)
               .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>

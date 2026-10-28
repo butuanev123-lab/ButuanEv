@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { X, Truck, Plus, Trash2 } from 'lucide-react';
-import { Shipment, ShipmentItem, Part } from '../../types/inventory';
+import React, { useState } from "react";
+import { X, Truck, Plus, Trash2, ChevronDown } from "lucide-react";
+import { Shipment, ShipmentItem, Part } from "../../types/inventory";
 
 interface AddShipmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddShipment: (shipment: Omit<Shipment, 'id'>) => void;
+  onAddShipment: (shipment: Omit<Shipment, "id">) => void;
   parts: Part[];
   existingShipmentCount: number;
 }
@@ -17,29 +17,39 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
   parts,
   existingShipmentCount,
 }) => {
-  const [shipmentNumber, setShipmentNumber] = useState(`SHP-03${22 + existingShipmentCount}`);
-  const [supplier, setSupplier] = useState('');
-  const [dateReceived, setDateReceived] = useState('10 Oct 2026');
-  const [trackingNumber, setTrackingNumber] = useState('');
-  const [notes, setNotes] = useState('');
+  const [shipmentNumber, setShipmentNumber] = useState(
+    `SHP-03${22 + existingShipmentCount}`,
+  );
+  const [supplier, setSupplier] = useState("");
+  const [dateReceived, setDateReceived] = useState("10 Oct 2026");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [notes, setNotes] = useState("");
   const [items, setItems] = useState<ShipmentItem[]>([
     {
-      partCode: parts[0]?.code || 'PRT-001',
-      partName: parts[0]?.name || 'Hex Bolt M8x30',
+      partCode: parts[0]?.code || "PRT-001",
+      partName: parts[0]?.name || "Hex Bolt M8x30",
       quantity: 50,
+      actualReceived: 0,
+      damaged: 0,
+      difference: 0,
+      note: "",
     },
   ]);
 
   if (!isOpen) return null;
 
   const handleAddItem = () => {
-    const defaultPart = parts[0] || { code: 'PRT-001', name: 'Default Part' };
+    const defaultPart = parts[0] || { code: "PRT-001", name: "Default Part" };
     setItems([
       ...items,
       {
         partCode: defaultPart.code,
         partName: defaultPart.name,
         quantity: 25,
+        actualReceived: 0,
+        damaged: 0,
+        difference: 0,
+        note: "",
       },
     ]);
   };
@@ -48,13 +58,52 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index: number, partCode: string, quantity: number) => {
+  const handleItemChange = (
+    index: number,
+    partCode: string,
+    quantity: number,
+  ) => {
     const found = parts.find((p) => p.code === partCode);
     const updated = [...items];
     updated[index] = {
       partCode,
       partName: found ? found.name : partCode,
       quantity: Math.max(1, quantity),
+      actualReceived: updated[index].actualReceived ?? 0,
+      damaged: updated[index].damaged ?? 0,
+      difference: 0,
+      note: updated[index].note ?? "",
+    };
+    setItems(updated);
+  };
+
+  const handleReceivedChange = (index: number, value: number) => {
+    const updated = [...items];
+    const item = updated[index];
+    const actualReceived = Math.max(0, value);
+    updated[index] = {
+      ...item,
+      actualReceived,
+      difference: actualReceived - item.quantity,
+    };
+    setItems(updated);
+  };
+
+  const handleDamagedChange = (index: number, value: number) => {
+    const updated = [...items];
+    const item = updated[index];
+    updated[index] = {
+      ...item,
+      damaged: Math.max(0, value),
+    };
+    setItems(updated);
+  };
+
+  const handleNoteChange = (index: number, value: string) => {
+    const updated = [...items];
+    updated[index] = {
+      ...updated[index],
+      note: value,
     };
     setItems(updated);
   };
@@ -67,7 +116,7 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
       shipmentNumber: shipmentNumber.trim().toUpperCase(),
       supplier: supplier.trim(),
       dateReceived: dateReceived.trim(),
-      status: 'Pending',
+      status: "Pending",
       items,
       trackingNumber: trackingNumber.trim() || undefined,
       notes: notes.trim() || undefined,
@@ -88,8 +137,12 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
               <Truck className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Add Inbound Shipment</h2>
-              <p className="text-xs text-slate-500">Record a supplier PO awaiting dock receipt</p>
+              <h2 className="text-sm font-bold text-slate-900">
+                Add Inbound Shipment
+              </h2>
+              <p className="text-xs text-slate-500">
+                Record a supplier PO awaiting dock receipt
+              </p>
             </div>
           </div>
           <button
@@ -100,10 +153,15 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 space-y-4 overflow-y-auto flex-1"
+        >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Shipment / OR #</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Shipment / OR #
+              </label>
               <input
                 type="text"
                 required
@@ -114,7 +172,9 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Supplier</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Supplier
+              </label>
               <input
                 type="text"
                 required
@@ -128,7 +188,9 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Expected Delivery Date</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Delivery Date
+              </label>
               <input
                 type="text"
                 required
@@ -139,7 +201,9 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Waybill / Tracking #</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Waybill / Tracking #
+              </label>
               <input
                 type="text"
                 value={trackingNumber}
@@ -153,7 +217,9 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
           {/* Shipment Items List */}
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-slate-700">Shipment Contents / Items</label>
+              <label className="block text-xs font-semibold text-slate-700">
+                Shipment Contents / Items
+              </label>
               <button
                 type="button"
                 onClick={handleAddItem}
@@ -163,40 +229,101 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
                 Add Item Line
               </button>
             </div>
-
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {items.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200/80">
-                  <select
-                    value={item.partCode}
-                    onChange={(e) => handleItemChange(idx, e.target.value, item.quantity)}
-                    className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  >
-                    {parts.map((p) => (
-                      <option key={p.code} value={p.code}>
-                        {p.code} - {p.name}
-                      </option>
-                    ))}
-                  </select>
+                <div
+                  key={idx}
+                  className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-lg border border-slate-200/80"
+                >
+                  <div className="col-span-full relative">
+                    <select
+                      value={item.partCode}
+                      onChange={(e) =>
+                        handleItemChange(idx, e.target.value, item.quantity)
+                      }
+                      className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none pr-10"
+                    >
+                      {parts.map((p) => (
+                        <option key={p.code} value={p.code}>
+                          {p.code} - {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none"
+                    />
+                  </div>
 
-                  <div className="w-24">
+                 <div className="flex justify-evenly col-span-full gap-2">
+                 <div className="col-span-2">
+                    <label className="text-[10px] text-slate-400 font-bold block text-center mb-1">
+                      Expected
+                    </label>
                     <input
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => handleItemChange(idx, item.partCode, Number(e.target.value))}
+                      onChange={(e) =>
+                        handleItemChange(
+                          idx,
+                          item.partCode,
+                          Number(e.target.value),
+                        )
+                      }
                       className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-md font-mono tabular-nums text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
+  
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-slate-400 font-bold block text-center mb-1">
+                        Actual Received
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={item.actualReceived ?? 0}
+                        onChange={(e) =>
+                          handleReceivedChange(idx, Number(e.target.value))
+                        }
+                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-md font-mono tabular-nums text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+  
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-slate-400 font-bold block text-center mb-1">
+                        Damaged
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={item.damaged ?? 0}
+                        onChange={(e) =>
+                          handleDamagedChange(idx, Number(e.target.value))
+                        }
+                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-md font-mono tabular-nums text-center focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                      />
+                    </div>
+  
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-slate-400  font-bold block text-center mb-1">
+                        Difference
+                      </label>
+                      <div className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-md font-mono tabular-nums text-center flex items-center justify-center text-slate-600">
+                        {(item.actualReceived ?? 0) - item.quantity}
+                      </div>
+                    </div>
+                 </div>
 
                   {items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(idx)}
-                      className="p-1 text-slate-400 hover:text-rose-500"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="col-span-12 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(idx)}
+                        className="p-1 text-slate-400 hover:text-rose-500"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -204,7 +331,9 @@ export const AddShipmentModal: React.FC<AddShipmentModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Receipt Notes</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Receipt Notes
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

@@ -5,18 +5,16 @@ import {
   Shipment,
   Assembly,
   DamagedRecord,
-  ReturnRecord,
+  RepairRecord,
   StockOutRecord,
   BatteryRecord,
-  ShipmentReceiptLine,
-  ShipmentStatus,
 } from './types/inventory';
 import {
   INITIAL_PARTS,
   INITIAL_SHIPMENTS,
   INITIAL_ASSEMBLIES,
   INITIAL_DAMAGED,
-  INITIAL_RETURNS,
+  INITIAL_REPAIRS,
   INITIAL_STOCK_OUT,
   INITIAL_BATTERIES,
 } from './data/initialData';
@@ -29,11 +27,10 @@ import { StockOutView } from './components/StockOutView';
 import { AssemblyView } from './components/AssemblyView';
 import { UnitsView } from './components/UnitsView';
 import { DamagedView } from './components/DamagedView';
-import { ReturnsView } from './components/ReturnsView';
+import { RepairView } from './components/RepairView';
 import { ReportsView } from './components/ReportsView';
 import { AddPartModal } from './components/modals/AddPartModal';
 import { AddShipmentModal } from './components/modals/AddShipmentModal';
-import { ReceiveShipmentModal } from './components/modals/ReceiveShipmentModal';
 import { StockAdjustModal } from './components/modals/StockAdjustModal';
 import { PartDetailModal } from './components/modals/PartDetailModal';
 import { ShipmentDetailModal } from './components/modals/ShipmentDetailModal';
@@ -56,7 +53,7 @@ export default function App() {
   const onDeletePart = (part: Part) => {
     setParts(prev => prev.filter(p => p.id !== part.id));
   };
-  const [returnsList, setReturnsList] = useState<ReturnRecord[]>(INITIAL_RETURNS);
+  const [repairsList, setRepairsList] = useState<RepairRecord[]>(INITIAL_REPAIRS);
   const [stockOutList, setStockOutList] = useState<StockOutRecord[]>(INITIAL_STOCK_OUT);
   const [batteries, setBatteries] = useState<BatteryRecord[]>(INITIAL_BATTERIES);
 
@@ -69,7 +66,6 @@ export default function App() {
   // Modals state
   const [isAddPartOpen, setIsAddPartOpen] = useState(false);
   const [isAddShipmentOpen, setIsAddShipmentOpen] = useState(false);
-  const [receivingShipment, setReceivingShipment] = useState<Shipment | null>(null);
   const [adjustingStock, setAdjustingStock] = useState<{
     part: Part;
     mode: 'in' | 'out';
@@ -205,14 +201,9 @@ export default function App() {
     addToast('success', `Shipment ${updated.shipmentNumber} Updated`);
   };
 
-  const handleConfirmReceipt = (
-    shipmentId: string,
-    confirmation: {
-      status: ShipmentStatus;
-      lines: Array<Omit<ShipmentReceiptLine, 'confirmedAt' | 'confirmedBy'>>;
-    }
-  ) => {
-    const targetShipment = shipments.find((s) => s.id === shipmentId);
+  // Direct Receive Shipment (no confirmation modal) — receives full expected quantities
+  const handleReceiveShipment = (shipment: Shipment) => {
+    const targetShipment = shipments.find((s) => s.id === shipment.id);
     if (!targetShipment || !['Pending', 'Received Partial'].includes(targetShipment.status)) return;
 
     const confirmedAt = new Date().toLocaleDateString('en-GB', {
@@ -220,12 +211,10 @@ export default function App() {
       month: 'short',
       year: 'numeric',
     }) + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    // Replace with the authenticated user's display name when auth is connected.
     const confirmedBy = 'Inventory Officer';
 
-    const addedGoodStockByCode = confirmation.lines.reduce<Record<string, number>>((totals, line, index) => {
-      const partCode = targetShipment.items[index]?.partCode;
-      if (partCode) totals[partCode] = (totals[partCode] || 0) + Math.max(0, line.actualReceived - line.damaged);
+    const addedGoodStockByCode = targetShipment.items.reduce<Record<string, number>>((totals, item) => {
+      totals[item.partCode] = (totals[item.partCode] || 0) + item.quantity;
       return totals;
     }, {});
 
@@ -251,34 +240,26 @@ export default function App() {
 
     setShipments((prev) =>
       prev.map((s) =>
-        s.id !== shipmentId ? s : {
+        s.id !== shipment.id ? s : {
           ...s,
-          status: confirmation.status,
+          status: 'Received Complete',
           receivedAt: confirmedAt,
           confirmedBy,
-          items: s.items.map((item, index) => {
-            const line = confirmation.lines[index];
-            const priorActual = item.actualReceived || 0;
-            const priorDamaged = item.damaged || 0;
-            const actualReceived = priorActual + line.actualReceived;
-            const damaged = priorDamaged + line.damaged;
-            return {
-              ...item,
-              actualReceived,
-              damaged,
-              difference: actualReceived - item.quantity,
-              note: line.note,
-              receiptHistory: [...(item.receiptHistory || []), { ...line, confirmedAt, confirmedBy }],
-            };
-          }),
+          items: s.items.map((item) => ({
+            ...item,
+            actualReceived: item.quantity,
+            damaged: 0,
+            difference: 0,
+            receiptHistory: [{ expected: item.quantity, actualReceived: item.quantity, damaged: 0, difference: 0, confirmedAt, confirmedBy }],
+          })),
         }
       )
     );
 
     addToast(
       'success',
-      `Receipt Confirmed for ${targetShipment.shipmentNumber}`,
-      `Good quantities added to Parts Inventory. Shipment is now ${confirmation.status}.`
+      `Received ${targetShipment.shipmentNumber}`,
+      `Full quantities added to Parts Inventory.`
     );
   };
 
@@ -362,39 +343,23 @@ export default function App() {
   };
 
   // Returns Log handler
-  const handleAddReturn = (record: Omit<ReturnRecord, 'id' | 'code'>) => {
-    const newReturn: ReturnRecord = {
+  const handleAddRepair = (record: Omit<RepairRecord, 'id' | 'code'>) => {
+    const newRecord: RepairRecord = {
       ...record,
-      id: `ret-${Date.now()}`,
-      code: `RET-0${13 + returnsList.length}`,
+      id: `rep-${Date.now()}`,
+      code: `REP-${100 + repairsList.length}`,
     };
-    setReturnsList((prev) => [newReturn, ...prev]);
-    addToast('info', `Return Logged: ${newReturn.code}`);
+
+    setRepairsList((prev) => [newRecord, ...prev]);
+
+    addToast('warning', `Repair Job Created: ${newRecord.code}`, `${record.quantity}x ${record.partName} sent for repair.`);
   };
 
-  const handleRestockReturn = (id: string) => {
-    const item = returnsList.find((r) => r.id === id);
-    if (!item) return;
-
-    setParts((prev) =>
-      prev.map((p) => {
-        if (p.code === item.partCode) {
-          const newQty = p.availableQty + item.quantity;
-          return {
-            ...p,
-            availableQty: newQty,
-            status: calculatePartStatus(newQty, p.minStockThreshold),
-          };
-        }
-        return p;
-      })
+  const handleUpdateRepairStatus = (id: string, status: RepairRecord['status']) => {
+    setRepairsList((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status } : r))
     );
-
-    setReturnsList((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: 'Restocked' } : r))
-    );
-
-    addToast('success', `Restocked Return: ${item.code}`, `+${item.quantity} units returned to inventory.`);
+    addToast('info', 'Repair Status Updated', `Marked as ${status}`);
   };
 
   const handleAddBattery = (battery: Omit<BatteryRecord, 'id' | 'lastChargedAt'>) => {
@@ -484,7 +449,7 @@ export default function App() {
               onStockOutPart={(p) => setAdjustingStock({ part: p, mode: 'out' })}
               onViewShipment={(s) => setViewingShipment({ shipment: s, editMode: false })}
               onEditShipment={(s) => setViewingShipment({ shipment: s, editMode: true })}
-              onReceiveShipment={(s) => setReceivingShipment(s)}
+              onReceiveShipment={handleReceiveShipment}
             />
           )}
 
@@ -506,7 +471,7 @@ export default function App() {
               onOpenAddShipment={() => setIsAddShipmentOpen(true)}
               onViewShipment={(s) => setViewingShipment({ shipment: s, editMode: false })}
               onEditShipment={(s) => setViewingShipment({ shipment: s, editMode: true })}
-              onReceiveShipment={(s) => setReceivingShipment(s)}
+              onReceiveShipment={handleReceiveShipment}
             />
           )}
 
@@ -545,12 +510,12 @@ export default function App() {
             />
           )}
 
-          {currentTab === 'returns' && (
-            <ReturnsView
-              returnsList={returnsList}
+          {currentTab === 'repair' && (
+            <RepairView
+              repairsList={repairsList}
               parts={parts}
-              onAddReturn={handleAddReturn}
-              onRestockReturn={handleRestockReturn}
+              onAddRepair={handleAddRepair}
+              onUpdateRepairStatus={handleUpdateRepairStatus}
             />
           )}
 
@@ -628,14 +593,6 @@ export default function App() {
         existingShipmentCount={shipments.length}
       />
 
-      <ReceiveShipmentModal
-        isOpen={Boolean(receivingShipment)}
-        shipment={receivingShipment}
-        parts={parts}
-        onClose={() => setReceivingShipment(null)}
-        onConfirmReceipt={handleConfirmReceipt}
-      />
-
       <StockAdjustModal
         isOpen={Boolean(adjustingStock)}
         part={adjustingStock?.part || null}
@@ -660,7 +617,6 @@ export default function App() {
         parts={parts}
         onClose={() => setViewingShipment(null)}
         onSaveShipment={handleSaveShipment}
-        onReceiveShipment={(s) => setReceivingShipment(s)}
       />
 
       {/* Non-intrusive Toast Notifications */}

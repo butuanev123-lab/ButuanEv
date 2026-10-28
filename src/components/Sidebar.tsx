@@ -6,6 +6,7 @@ import {
   ArrowDownRight,
   Wrench,
   Boxes,
+  Hammer,
   AlertTriangle,
   RotateCcw,
   BatteryCharging,
@@ -93,11 +94,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       tooltip: 'Damaged items & quarantine',
     },
     {
-      id: 'returns' as NavigationTab,
-      label: 'Returns',
-      icon: RotateCcw,
+      id: 'repair' as NavigationTab,
+      label: 'Repair',
+      icon: Hammer,
       badge: null,
-      tooltip: 'Customer returns & vendor RMAs',
+      tooltip: 'Repair jobs & service tracking',
     },
     {
       id: 'reports' as NavigationTab,

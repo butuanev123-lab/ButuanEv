@@ -156,10 +156,7 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
             toNum(updates.actualReceived),
           );
         if (updates.damaged !== undefined && updates.damaged !== "")
-          next.damaged = Math.min(
-            updates.damaged,
-            toNum(next.actualReceived),
-          );
+          next.damaged = Math.min(updates.damaged, toNum(next.actualReceived));
         return next;
       }),
     );
@@ -304,7 +301,6 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
                                 actualReceived: numberValue(event.target.value),
                               })
                             }
-                            
                             className="w-24 px-2 py-1.5 font-mono tabular-nums border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                           />
                         </td>
@@ -328,7 +324,6 @@ export const ReceiveShipmentModal: React.FC<ReceiveShipmentModalProps> = ({
                                 damaged: numberValue(event.target.value),
                               })
                             }
-                            
                             className="w-20 px-2 py-1.5 font-mono tabular-nums border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                           />
                         </td>

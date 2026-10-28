@@ -102,6 +102,21 @@ export interface ReturnRecord {
   status: 'Awaiting Inspection' | 'Restocked' | 'Credit Issued';
 }
 
+export interface RepairRecord {
+  id: string;
+  code: string;
+  partCode: string;
+  partName: string;
+  quantity: number;
+  issue: string;
+  status: 'Awaiting Repair' | 'In Repair' | 'Completed' | 'Returned';
+  dateReported: string;
+  reportedBy: string;
+  technician?: string;
+  repairCost?: number;
+  warranty: 'In Warranty' | 'Out of Warranty';
+}
+
 export interface StockOutRecord {
   id: string;
   transactionNumber: string;
@@ -132,6 +147,6 @@ export type NavigationTab =
   | 'assembly'
   | 'units'
   | 'damaged'
-  | 'returns'
+  | 'repair'
   | 'batteries'
   | 'reports';

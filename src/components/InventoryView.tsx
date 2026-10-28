@@ -81,7 +81,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       "Min Threshold",
       "Location",
       "Status",
-      "Unit Price ($)",
+      "Unit Price (₱)",
     ];
     const rows = filteredParts.map((p) => [
       p.code,
@@ -173,7 +173,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             Estimated Valuation
           </span>
           <div className="text-2xl font-bold text-teal-700 font-mono tabular-nums mt-0.5">
-            $
+            ₱
             {totalValuation.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,

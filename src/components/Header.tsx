@@ -71,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
     assembly: 'Assembly & BOM',
     units: 'Assembled Units',
     damaged: 'Damaged Goods',
-    returns: 'Returns & RMA',
+    repair: 'Repair & Service',
     batteries: 'Battery Management',
     reports: 'Valuation & Reports',
   }[currentTab];

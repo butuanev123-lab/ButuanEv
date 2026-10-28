@@ -285,23 +285,27 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                           <td className="py-3.5 px-4">
                             <span
                               className={`inline-flex items-center gap-1.5 text-xs font-medium ${
-                                s.status === 'Pending'
-                                  ? 'text-blue-700'
-                                  : s.status === 'Received Partial' || s.status === 'Closed with Shortage'
-                                    ? 'text-amber-700'
-                                  : 'text-emerald-700'
+                                s.receivedAt
+                                  ? 'text-emerald-700'
+                                  : s.status === 'Pending'
+                                    ? 'text-blue-700'
+                                    : s.status === 'Received Partial' || s.status === 'Closed with Shortage'
+                                      ? 'text-amber-700'
+                                      : 'text-emerald-700'
                               }`}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full  ${
-                                  s.status === 'Pending'
-                                    ? 'bg-blue-500'
-                                    : s.status === 'Received Partial' || s.status === 'Closed with Shortage'
-                                      ? 'bg-amber-500'
-                                    : 'bg-emerald-500'
+                                  s.receivedAt
+                                    ? 'bg-emerald-500'
+                                    : s.status === 'Pending'
+                                      ? 'bg-blue-500'
+                                      : s.status === 'Received Partial' || s.status === 'Closed with Shortage'
+                                        ? 'bg-amber-500'
+                                        : 'bg-emerald-500'
                                 }`}
                               />
-                              {s.status}
+                              {s.receivedAt ? 'Received' : s.status}
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
@@ -312,7 +316,12 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                               >
                                 View
                               </button>
-                              {s.status === 'Pending' || s.status === 'Received Partial' ? (
+                              {s.receivedAt || (s.status !== 'Pending' && s.status !== 'Received Partial') ? (
+                                <>
+                                  <span className="text-slate-300">·</span>
+                                  <span className="text-slate-400 italic">View-only</span>
+                                </>
+                              ) : (
                                 <>
                                   <span className="text-slate-300">·</span>
                                   <button
@@ -328,11 +337,6 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                                   >
                                     Receive
                                   </button>
-                                </>
-                              ) : (
-                                <>
-                                  <span className="text-slate-300">·</span>
-                                  <span className="text-slate-400 italic">View-only</span>
                                 </>
                               )}
                             </div>
@@ -440,7 +444,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                           {req.status !== 'Received' ? (
                             <button
                               onClick={() => onConvertRequisitionToShipment(req)}
-                              className="px-2.5 py-1 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-md transition-colors flex items-center gap-1 inline-flex cursor-pointer"
+                              className="px-2.5 py-1 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-md transition-colors items-center gap-1 inline-flex cursor-pointer"
                               title="Approve and convert to pending inbound delivery"
                             >
                               <Send className="w-3 h-3" />

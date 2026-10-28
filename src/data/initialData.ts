@@ -1,4 +1,4 @@
-import { Part, Shipment, Assembly, DamagedRecord, ReturnRecord, StockOutRecord, BatteryRecord } from '../types/inventory';
+import { Part, Shipment, Assembly, DamagedRecord, RepairRecord, StockOutRecord, BatteryRecord } from '../types/inventory';
 
 export const INITIAL_PARTS: Part[] = [
   {
@@ -216,28 +216,34 @@ export const INITIAL_DAMAGED: DamagedRecord[] = [
   },
 ];
 
-export const INITIAL_RETURNS: ReturnRecord[] = [
+export const INITIAL_REPAIRS: RepairRecord[] = [
   {
-    id: 'ret-1',
-    code: 'RET-012',
-    partCode: 'PRT-002',
-    partName: 'Ball Bearing 608ZZ',
-    quantity: 10,
-    type: 'Vendor RMA',
-    partner: 'Central Bearing Supply',
-    date: '04 Oct 2026',
-    status: 'Awaiting Inspection',
-  },
-  {
-    id: 'ret-2',
-    code: 'RET-009',
+    id: 'rep-1',
+    code: 'REP-001',
     partCode: 'PRT-006',
     partName: 'Stepper Motor NEMA 17',
+    quantity: 2,
+    issue: 'Motor stalling under load, encoder signal intermittent',
+    status: 'Awaiting Repair',
+    dateReported: '04 Oct 2026',
+    reportedBy: 'K. Larson',
+    technician: 'J. Miller',
+    repairCost: 45.00,
+    warranty: 'Out of Warranty',
+  },
+  {
+    id: 'rep-2',
+    code: 'REP-002',
+    partCode: 'PRT-002',
+    partName: 'Ball Bearing 608ZZ',
     quantity: 1,
-    type: 'Customer Return',
-    partner: 'Apex Dynamics Lab',
-    date: '28 Sep 2026',
-    status: 'Restocked',
+    issue: 'Rough rotation, audible grinding noise',
+    status: 'In Repair',
+    dateReported: '02 Oct 2026',
+    reportedBy: 'M. Vance',
+    technician: 'J. Miller',
+    repairCost: 12.00,
+    warranty: 'In Warranty',
   },
 ];
 
